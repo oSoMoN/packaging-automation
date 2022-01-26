@@ -1,0 +1,30 @@
+name: Thunderbird new version check
+
+on:
+  schedule:
+    # Run every hour (at minute 27)
+    - cron: '27 * * * *'
+  # Allow running manually, for testing purposes
+  workflow_dispatch:
+
+jobs:
+  check-new-thunderbird-versions:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Install python dependencies
+        run: sudo apt update && sudo apt install python3-lxml python3-packaging
+      - name: Check for new Thunderbird versions
+        run: |
+          ./.github/scripts/mozilla-check-new-version.py thunderbird --tg-token ${{ secrets.TG_THUNDERBIRD_TOKEN }} --tg-chat-id ${{ secrets.TG_CHAT_ID }}
+          candidates="thunderbird-candidates.json"
+          if [ "$(git diff --name-only)" = "$candidates" ]; then
+            git add $candidates
+            git config user.name "GitHub Actions"
+            git config user.email "actions@github.com"
+            git commit -m "Update thunderbird versions."
+            git push https://${{ github.actor }}:${{ secrets.REPO_TOKEN }}@github.com/${{ github.repository }}.git main
+          fi
