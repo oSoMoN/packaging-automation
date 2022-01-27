@@ -1,0 +1,31 @@
+name: Chromium new version check
+
+on:
+  schedule:
+    # Run every hour (at minute 12)
+    - cron: '12 * * * *'
+  # Allow running manually, for testing purposes
+  workflow_dispatch:
+
+jobs:
+  check-new-chromium-versions:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Install dependencies
+        run: sudo apt update && sudo apt install coreutils curl dpkg jq
+      - name: Check for new Chromium versions
+        run: |
+          for channel in stable beta dev; do
+            ./.github/scripts/chromium-check-new-version.sh $channel ${{ secrets.TG_CHROMIUM_TOKEN }} ${{ secrets.TG_CHAT_ID }}
+          done
+          if [ -n "$(git diff --name-only)" ]; then
+            git add chromium-last-version-*.txt
+            git config user.name "GitHub Actions"
+            git config user.email "actions@github.com"
+            git commit -m "Update chromium versions."
+            git push https://${{ github.actor }}:${{ secrets.REPO_TOKEN }}@github.com/${{ github.repository }}.git main
+          fi
