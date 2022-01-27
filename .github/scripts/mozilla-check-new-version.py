@@ -55,10 +55,12 @@ def test_version(product, versions, candidate, channel):
     return False
 
 
-def send_new_candidate_message(tg_token, tg_chat_id, versions, channel):
+def send_new_candidate_message(tg_token, tg_chat_id,
+                               product, versions, channel):
     cname = {RELEASE: "release", ESR: "ESR", BETA: "beta"}[channel]
     c = versions[channel]
-    url = "{}{}-candidates/{}/".format(ROOT_URL, c[VERSION], c[BUILD])
+    url = "{}{}-candidates/{}/".format(
+        ROOT_URL.format(product=product), c[VERSION], c[BUILD])
     send_tg_message(tg_token, tg_chat_id, "New {} candidate: [{} {}]({})"
                     .format(cname, c[VERSION], c[BUILD], url))
 
@@ -95,11 +97,14 @@ def check_new_candidates(product, tg_token, tg_chat_id):
     with open(candidates_file, "w") as f:
         json.dump(versions, f)
     if updates[RELEASE]:
-        send_new_candidate_message(tg_token, tg_chat_id, versions, RELEASE)
+        send_new_candidate_message(
+            tg_token, tg_chat_id, product, versions, RELEASE)
     if updates[ESR]:
-        send_new_candidate_message(tg_token, tg_chat_id, versions, ESR)
+        send_new_candidate_message(
+            tg_token, tg_chat_id, product, versions, ESR)
     if updates[BETA]:
-        send_new_candidate_message(tg_token, tg_chat_id, versions, BETA)
+        send_new_candidate_message(
+            tg_token, tg_chat_id, product, versions, BETA)
 
 
 if __name__ == '__main__':
